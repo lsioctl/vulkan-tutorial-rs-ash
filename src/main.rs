@@ -12,7 +12,7 @@ use ash::{
     khr::{surface, swapchain as khr_swapchain},
     vk, Device, Entry, Instance,
 };
-use cgmath::{Deg, Matrix4, Point3, Vector3};
+use cgmath::{Deg, InnerSpace, Matrix4, Point3, Quaternion, Rotation3, Vector3};
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use std::{
     ffi::{CStr, CString},
@@ -27,8 +27,8 @@ use winit::{
 };
 use image::ImageReader;
 
-const WIDTH: u32 = 800;
-const HEIGHT: u32 = 600;
+const WIDTH: u32 = 1280;
+const HEIGHT: u32 = 720;
 const MAX_FRAMES_IN_FLIGHT: u32 = 2;
 
 fn main() {
@@ -2237,7 +2237,7 @@ impl VulkanApp {
             let y_ratio = delta[1] as f32 / self.swapchain_properties.extent.height as f32;
             let theta = x_ratio * 180.0_f32.to_radians();
             let phi = y_ratio * 90.0_f32.to_radians();
-            self.camera.rotate(theta, phi);
+            self.camera.rotate(3.0 * theta, 2.0 * phi);
         }
         if let Some(wheel_delta) = self.wheel_delta {
             self.camera.forward(wheel_delta * 0.3);
@@ -2245,8 +2245,17 @@ impl VulkanApp {
 
         let aspect = self.swapchain_properties.extent.width as f32
             / self.swapchain_properties.extent.height as f32;
+
+        
+        // I still do not understand why this model seems rotated
+        // and I struggled with what looks like no documentation on cgmath
+        let rotation_x = Quaternion::from_angle_x(Deg(-90.0));
+        let rotation_y = Quaternion::from_angle_y(Deg(-90.0));
+        let rotation = Quaternion::normalize(rotation_y * rotation_x);
+        let model = Matrix4::from(rotation);
+
         let ubo = UniformBufferObject {
-            model: Matrix4::from_angle_x(Deg(270.0)),
+            model,
             view: Matrix4::look_at_rh(
                 self.camera.position(),
                 Point3::new(0.0, 0.0, 0.0),
