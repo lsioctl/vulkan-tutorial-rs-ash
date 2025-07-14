@@ -25,6 +25,7 @@ use winit::{
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
     window::{Window, WindowId},
 };
+use image::ImageReader;
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 600;
@@ -1170,10 +1171,12 @@ impl VulkanApp {
         command_pool: vk::CommandPool,
         copy_queue: vk::Queue,
     ) -> Texture {
-        let cursor = fs::load("images/chalet.jpg");
-        let image = image::load(cursor, image::ImageFormat::Jpeg)
+        let image = ImageReader::open("assets/images/viking_room.png")
+            .unwrap()
+            .decode()
             .unwrap()
             .flipv();
+    
         let image_as_rgb = image.to_rgba8();
         let width = image_as_rgb.width();
         let height = image_as_rgb.height();
@@ -1614,7 +1617,7 @@ impl VulkanApp {
 
     fn load_model() -> (Vec<Vertex>, Vec<u32>) {
         log::debug!("Loading model.");
-        let mut cursor = fs::load("models/chalet.obj");
+        let mut cursor = fs::load("models/viking_room.obj");
         let (models, _) = tobj::load_obj_buf(
             &mut cursor,
             &tobj::LoadOptions {
